@@ -1,0 +1,53 @@
+.home-container {
+    text-align: center;
+    padding: 20px;
+}
+
+.features ul {
+    list-style: none; /* Removes default list styling */
+    padding: 0;
+}
+
+.features li {
+    margin-bottom: 10px; /* Adds space between list items */
+}
+
+.interactives .interactive-link {
+    display: block;
+    background-color: #007bff;
+    color: white;
+    text-decoration: none;
+    padding: 10px 20px;
+    margin: 5px auto;
+    width: fit-content;
+    border-radius: 5px;
+}
+
+.interactives .interactive-link:hover {
+    background-color: #0056b3;
+}
+
+.categories .category-list {
+    display: flex;
+    justify-content: center;
+    flex-wrap: wrap;
+    gap: 10px;
+}
+
+.category-link {
+    padding: 10px 20px;
+    background-color: #007bff;
+    color: white;
+    text-decoration: none;
+    border-radius: 5px;
+}
+
+.category-link:hover {
+    background-color: #0056b3;
+}
+
+footer {
+    margin-top: 20px;
+    font-size: small;
+    color: #666;
+}
