@@ -3,6 +3,7 @@ import { Link, useNavigate } from 'react-router-dom';
 
 function Header() {
     const navigate = useNavigate();
+    const isAuthenticated = localStorage.getItem('isAuthenticated');  // Check if user is authenticated
 
     const handleLogout = () => {
         if (window.confirm('Are you sure you want to log out?')) {
@@ -27,9 +28,11 @@ function Header() {
                     </li>
                 </ul>
             </nav>
-            <button style={styles.logoutButton} onClick={handleLogout}>
-                Logout
-            </button>
+            {isAuthenticated ? (
+                <button style={styles.logoutButton} onClick={handleLogout}>Logout</button>
+            ) : (
+                <Link to="/login" style={{...styles.logoutButton, textDecoration: 'none'}}>Login</Link>
+            )}
         </header>
     );
 }
@@ -73,6 +76,7 @@ const styles = {
         borderRadius: '5px',
         cursor: 'pointer',
         transition: 'background-color 0.3s ease',
+        textDecoration: 'none'
     },
     logoutButtonHover: {
         backgroundColor: '#e60000',
