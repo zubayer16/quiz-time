@@ -119,15 +119,40 @@ const Mutation = new GraphQLObjectType({
           { new: true }
         );
       },
-    },
-    
+    }, 
     deleteQuiz: {
       type: QuizType,
       args: {
         id: { type: new GraphQLNonNull(GraphQLString) },
       },
-      resolve(parent, args) {
-        return Quiz.findByIdAndRemove(args.id);
+      async resolve(parent, args) {
+        const quiz = await Quiz.findByIdAndDelete(args.id);
+        if (!quiz) {
+          throw new Error('Quiz not found');
+        }
+        return quiz;
+      },
+    },
+    submitQuiz: {
+      type: GraphQLInt, // Return the score as an integer
+      args: {
+        quizId: { type: new GraphQLNonNull(GraphQLString) },
+        answers: { type: new GraphQLList(new GraphQLNonNull(GraphQLInt)) }, // List of answers
+      },
+      async resolve(parent, args) {
+        const quiz = await Quiz.findById(args.quizId);
+        if (!quiz) {
+          throw new Error('Quiz not found');
+        }
+
+        let score = 0;
+        quiz.questions.forEach((question, index) => {
+          if (question.correctAnswer === args.answers[index]) {
+            score += 1; // Increment score for each correct answer
+          }
+        });
+
+        return score;
       },
     },
     addUser: {
