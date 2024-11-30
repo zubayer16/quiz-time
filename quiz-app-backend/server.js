@@ -3,8 +3,14 @@ const express = require('express');
 const { graphqlHTTP } = require('express-graphql');
 const mongoose = require('mongoose');
 const schema = require('./graphql/schema');
+const cros = require('cors');
 
 const app = express();
+
+app.use(cros());
+app.options('*', cros());
+
+
 
 // Connect to MongoDB
 mongoose
