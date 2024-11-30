@@ -1,9 +1,25 @@
-import React from 'react';
+import React, {useState, useEffect} from 'react';
 import { Link } from 'react-router-dom';
-import categories from '../utils/categories'; // Ensure the path matches your project structure
-import '../pages/Quiz.css'; // Assuming you will add CSS here
+import categories from '../utils/categories';
+import '../pages/Quiz.css';
+import { useQuery } from '@apollo/client';
+import { GET_QUIZZES } from '../graphql/queries/quiz';
 
 function Quiz() {
+    const { loading, error, data } = useQuery(GET_QUIZZES);
+    const [quizzes, setQuizzes] = useState([]);
+    
+    useEffect(() => {
+        console.log(data);
+        if (data) {
+            setQuizzes(data.quizzes);
+        }
+    }, [data]);
+
+
+    if (loading) return <p>Loading...</p>;
+    if (error) return <p>Error: {error.message}</p>;
+
     return (
         <div className="quiz-container">
             <h1>Select a Category</h1>
