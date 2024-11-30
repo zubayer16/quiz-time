@@ -2,7 +2,7 @@ import React from 'react';
 import { Link } from 'react-router-dom';
 import './Results.css';  // Assuming you create a separate CSS file for styling
 
-function Results({ score, totalQuestions }) {
+function Results({ score, totalQuestions }: { score: number, totalQuestions: number }) {
     const scorePercentage = (score / totalQuestions) * 100;
 
     const getPerformanceMessage = () => {

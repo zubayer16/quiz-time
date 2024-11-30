@@ -35,7 +35,7 @@ function App() {
                         element={<ProtectedRoute><QuizCategory category={category.name} /></ProtectedRoute>}
                     />
                 ))}
-                <Route path="/results" element={<ProtectedRoute><Results /></ProtectedRoute>} />
+                <Route path="/results" element={<ProtectedRoute><Results score={0} totalQuestions={0} /></ProtectedRoute>} />
                 <Route path="/timed-quizzes" element={<ProtectedRoute><TimedQuizzes /></ProtectedRoute>} />
                 <Route path="/select-difficulty" element={<ProtectedRoute><MultipleDifficulty /></ProtectedRoute>} />
                 <Route path="/leaderboards" element={<ProtectedRoute><Leaderboards /></ProtectedRoute>} />

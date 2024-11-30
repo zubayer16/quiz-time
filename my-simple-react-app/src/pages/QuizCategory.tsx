@@ -2,14 +2,18 @@ import React, { useState } from 'react';
 import questions from '../utils/questions';
 import { useNavigate } from 'react-router-dom';
 
-function QuizCategory({ category }) {
+interface QuizCategoryProps {
+    category: string;
+}
+
+function QuizCategory({ category }: QuizCategoryProps) {
     const navigate = useNavigate();
     const categoryQuestions = questions.filter(q => q.category === category);
     const [currentQuestionIndex, setCurrentQuestionIndex] = useState(0);
     const [score, setScore] = useState(0);
     const [showResults, setShowResults] = useState(false);
 
-    const handleAnswer = (isCorrect) => {
+    const handleAnswer = (isCorrect: boolean) => {
         if (isCorrect) {
             setScore(score + 1);
         }

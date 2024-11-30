@@ -1,6 +1,6 @@
 import React from 'react';
 
-function Result({ isCorrect }) {
+function Result({ isCorrect }: { isCorrect: boolean }) {
     return (
         <div>
             {isCorrect ? <p>Correct!</p> : <p>Wrong!</p>}

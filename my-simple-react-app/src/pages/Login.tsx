@@ -10,7 +10,7 @@ function Login() {
     const [error, setError] = useState('');
     const navigate = useNavigate();
 
-    const handleLogin = async (e) => {
+    const handleLogin = async (e: React.FormEvent<HTMLFormElement>) => {
         e.preventDefault();
         setError('');
         // Mock login logic
@@ -22,7 +22,7 @@ function Login() {
         }
     };
 
-    const handleRegister = async (e) => {
+    const handleRegister = async (e: React.FormEvent<HTMLFormElement>) => {
         e.preventDefault();
         setError('');
         // Mock registration logic
