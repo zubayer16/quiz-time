@@ -1,7 +1,7 @@
 const axios = require('axios'); // Add this at the top of schema.js
 const bcrypt = require('bcrypt');
 const jwt = require('jsonwebtoken');
-const { GraphQLObjectType, GraphQLString, GraphQLSchema, GraphQLList, GraphQLInt, GraphQLNonNull } = require('graphql');
+const { GraphQLObjectType, GraphQLString, GraphQLSchema, GraphQLList, GraphQLInt, GraphQLNonNull, GraphQLInputObjectType } = require('graphql');
 const Quiz = require('../models/Quiz');
 const User = require('../models/User');
 
@@ -26,6 +26,15 @@ const QuizType = new GraphQLObjectType({
     description: { type: GraphQLString },
     questions: { type: new GraphQLList(QuestionType) },
   }),
+});
+
+const QuestionInputType = new GraphQLInputObjectType({
+  name: "QuestionInput",
+  fields: {
+    question: { type: GraphQLString },
+    options: { type: new GraphQLList(GraphQLString) },
+    correctAnswer: { type: GraphQLInt }, // Adjust type to match your needs
+  },
 });
 
 // User Type
@@ -77,6 +86,28 @@ const RootQuery = new GraphQLObjectType({
         } catch (error) {
           throw new Error('Invalid or expired token');
         }
+      },
+    },
+    getResults: {
+      type: GraphQLInt, // Return the score as an integer
+      args: {
+        quizId: { type: new GraphQLNonNull(GraphQLString) },
+        answers: { type: new GraphQLList(new GraphQLNonNull(GraphQLInt)) }, // List of answers
+      },
+      async resolve(parent, args) {
+        const quiz = await Quiz.findById(args.quizId);
+        if (!quiz) {
+          throw new Error('Quiz not found');
+        }
+
+        let score = 0;
+        quiz.questions.forEach((question, index) => {
+          if (question.correctAnswer === args.answers[index]) {
+            score += 1; // Increment score for each correct answer
+          }
+        });
+
+        return score;
       },
     },
   },
@@ -134,11 +165,13 @@ const Mutation = new GraphQLObjectType({
       args: {
         title: { type: GraphQLString },
         description: { type: GraphQLString },
+        questions: { type: new GraphQLList(QuestionInputType) },
       },
       resolve(parent, args) {
         const quiz = new Quiz({
           title: args.title,
           description: args.description,
+          questions: args.questions,
         });
         return quiz.save();
       },
