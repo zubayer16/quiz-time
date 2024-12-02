@@ -1,32 +1,46 @@
 {
-  "name": "my-simple-react-app",
+  "name": "quiz-time",
   "version": "0.1.0",
   "private": true,
   "dependencies": {
     "@apollo/client": "^3.11.10",
-    "@craco/craco": "^5.9.0",
+    "@radix-ui/react-dialog": "^1.1.2",
+    "@radix-ui/react-label": "^2.1.0",
+    "@radix-ui/react-progress": "^1.1.0",
+    "@radix-ui/react-slot": "^1.1.0",
     "@testing-library/jest-dom": "^5.17.0",
     "@testing-library/react": "^13.4.0",
     "@testing-library/user-event": "^13.5.0",
     "@types/jest": "^29.5.14",
-    "@types/node": "^22.10.1",
     "@types/react": "^18.3.12",
     "@types/react-dom": "^18.3.1",
+    "class-variance-authority": "^0.7.1",
+    "clsx": "^2.1.1",
+    "fork-ts-checker-webpack-plugin": "^6.5.3",
     "framer-motion": "^11.11.17",
     "graphql": "^16.9.0",
     "jsonwebtoken": "^9.0.2",
+    "lucide-react": "^0.462.0",
     "react": "^18.3.1",
     "react-dom": "^18.3.1",
     "react-router-dom": "^6.28.0",
     "react-scripts": "^5.0.1",
-    "typescript": "^5.7.2",
+    "tailwind-merge": "^2.5.5",
+    "tailwindcss-animate": "^1.0.7",
+    "typescript": "^5.0.4",
     "web-vitals": "^2.1.4"
+  },
+  "overrides": {
+    "react-scripts": {
+      "typescript": "^5"
+    }
   },
   "scripts": {
     "start": "react-scripts start",
     "build": "react-scripts build",
     "test": "react-scripts test",
-    "eject": "react-scripts eject"
+    "eject": "react-scripts eject",
+    "format": "prettier --write \"src/**/*.{js,jsx,ts,tsx,css,md}\""
   },
   "eslintConfig": {
     "extends": [
@@ -47,8 +61,14 @@
     ]
   },
   "devDependencies": {
+    "@babel/plugin-proposal-private-property-in-object": "^7.21.11",
+    "@types/node": "^22.10.1",
     "autoprefixer": "^10.4.20",
+    "babel-plugin-module-resolver": "^5.0.2",
+    "eslint-config-prettier": "^9.1.0",
+    "eslint-plugin-prettier": "^5.2.1",
     "postcss": "^8.4.49",
+    "prettier": "^3.4.1",
     "tailwindcss": "^3.4.15"
   },
   "description": "This project was bootstrapped with [Create React App](https://github.com/facebook/create-react-app).",

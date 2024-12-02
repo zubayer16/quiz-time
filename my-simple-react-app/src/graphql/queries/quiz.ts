@@ -14,3 +14,17 @@ export const GET_QUIZZES = gql`
         }
     }
 `;
+
+export const GET_QUIZ_BY_ID = gql`
+  query GetQuizById($quizId: String!) {
+    quiz(id: $quizId) {
+      id
+      title
+      description
+      questions {
+        question
+        options
+      }
+    }
+  }
+`;

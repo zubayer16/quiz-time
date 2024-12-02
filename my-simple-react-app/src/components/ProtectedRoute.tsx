@@ -1,19 +1,18 @@
 import React from 'react';
 import { Navigate } from 'react-router-dom';
-
-// A component to protect routes
 import { ReactNode } from 'react';
+import MainLayout from './layouts/MainLayout';
 
 function ProtectedRoute({ children }: { children: ReactNode }) {
-    const isAuthenticated = localStorage.getItem('isAuthenticated');
+  const token = localStorage.getItem('token');
 
-    // If the user is not authenticated, redirect to login
-    if (!isAuthenticated) {
-        return <Navigate to="/login" />;
-    }
+  // If the user is not authenticated, redirect to login
+  if (!token) {
+    return <Navigate to='/' />;
+  }
 
-    // Otherwise, render the children (protected component)
-    return children;
+  // Otherwise, render the children (protected component) within MainLayout
+  return <MainLayout>{children}</MainLayout>;
 }
 
 export default ProtectedRoute;
