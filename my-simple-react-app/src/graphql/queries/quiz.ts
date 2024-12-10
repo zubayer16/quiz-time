@@ -1,18 +1,18 @@
 import { gql } from '@apollo/client';
 
 export const GET_QUIZZES = gql`
-    query GetQuizzes {
-        quizzes {
-            id
-            title
-            description
-            questions {
-                question
-                options
-                correctAnswer
-            }
-        }
+  query GetQuizzes {
+    quizzes {
+      id
+      title
+      description
+      questions {
+        question
+        options
+        correctAnswer
+      }
     }
+  }
 `;
 
 export const GET_QUIZ_BY_ID = gql`
@@ -24,6 +24,24 @@ export const GET_QUIZ_BY_ID = gql`
       questions {
         question
         options
+      }
+    }
+  }
+`;
+
+export const GET_QUIZ_RESULT = gql`
+  query GetQuizResult($quizId: ID!, $userId: ID!) {
+    getQuizResult(quizId: $quizId, userId: $userId) {
+      score
+      answers
+      submittedAt
+      quiz {
+        title
+        questions {
+          question
+          options
+          correctAnswer
+        }
       }
     }
   }

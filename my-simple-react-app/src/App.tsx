@@ -1,5 +1,6 @@
 import React from 'react';
-import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-dom';
+import { BrowserRouter as Router, Routes, Route } from 'react-router-dom';
+import { AuthProvider, useAuth } from './context/AuthContext';
 import Home from './pages/Home';
 import Login from './pages/auth/Login';
 import Quiz from './pages/Quiz';
@@ -11,132 +12,169 @@ import Leaderboards from './pages/features/Leaderboards';
 import UserProgress from './pages/features/UserProgress';
 import Multiplayer from './pages/features/Multiplayer';
 import Recommendations from './pages/features/Recommendations';
-import ProtectedRoute from './components/ProtectedRoute';
-import categories from './utils/categories';
 import LandingPage from './pages/LandingPage';
 import RegistrationForm from './pages/auth/RegistrationForm';
 import DashboardPage from './pages/DashboardPage';
 import QuizzesPage from './pages/QuizzesPage';
 import QuizView from './pages/QuizView';
 import QuizResults from './pages/QuizResults';
+import ProtectedRoute from './components/ProtectedRoute';
+
+// Shared Navigation Component
+const Navigation = () => {
+  const { isAuthenticated, logout } = useAuth();
+
+  /*return (
+    <div className="navigation">
+      <nav className="flex items-center justify-between p-4 bg-gray-800 text-white">
+        <div>
+          <a href="/home" className="text-lg font-bold">Home</a>
+        </div>
+        {isAuthenticated && (
+          <div className="flex gap-4">
+            <button onClick={logout} className="bg-red-500 px-4 py-2 rounded">Logout</button>
+          </div>
+        )}
+      </nav>
+    </div>
+  );*/
+};
+
+// Helper component to check authentication status
+const RequireAuth = ({ children }: { children: JSX.Element }) => {
+  const { isAuthenticated } = useAuth();
+
+  if (!isAuthenticated) {
+    return <Login />;
+  }
+
+  return children;
+};
 
 function App() {
-  const isAuthenticated = localStorage.getItem('isAuthenticated');
-
   return (
-    <Router>
-      <Routes>
-        {/* Public Routes */}
-        <Route path='/login' element={<Login />} />
-        <Route path='/register' element={<RegistrationForm />} />
-        <Route path='/' element={<LandingPage />} />
-        <Route
-          path='/home'
-          element={
-            <ProtectedRoute>
-              <DashboardPage />
-            </ProtectedRoute>
-          }
-        />
-        <Route
-          path='/quiz/:quizId'
-          element={
-            <ProtectedRoute>
-              <QuizView />
-            </ProtectedRoute>
-          }
-        />
+    <AuthProvider>
+      <Router>
+        <Routes>
+          {/* Public Routes */}
+          <Route path='/login' element={<Login />} />
+          <Route path='/register' element={<RegistrationForm />} />
+          <Route path='/' element={<LandingPage />} />
 
-        <Route
-          path='/quizzes/:category'
-          element={
-            <ProtectedRoute>
-              <QuizzesPage />
-            </ProtectedRoute>
-          }
-        />
-
-        
-
-        {/* Protected Routes */}
-        <Route
-          path='/quiz'
-          element={
-            <ProtectedRoute>
-              <Quiz />
-            </ProtectedRoute>
-          }
-        />
-        {categories &&
-          categories.map((category, index) => (
-            <Route
-              key={index}
-              path={category.path}
-              element={
-                <ProtectedRoute>
-                  <QuizCategory category={category.name} />
-                </ProtectedRoute>
-              }
-            />
-          ))}
-        <Route
-          path='/results'
-          element={
-            <ProtectedRoute>
-              <Results score={0} totalQuestions={0} />
-            </ProtectedRoute>
-          }
-        />
-        <Route
-          path='/timed-quizzes'
-          element={
-            <ProtectedRoute>
-              <TimedQuizzes />
-            </ProtectedRoute>
-          }
-        />
-        <Route
-          path='/select-difficulty'
-          element={
-            <ProtectedRoute>
-              <MultipleDifficulty />
-            </ProtectedRoute>
-          }
-        />
-        <Route
-          path='/leaderboards'
-          element={
-            <ProtectedRoute>
-              <Leaderboards />
-            </ProtectedRoute>
-          }
-        />
-        <Route
-          path='/track-progress'
-          element={
-            <ProtectedRoute>
-              <UserProgress />
-            </ProtectedRoute>
-          }
-        />
-        <Route
-          path='/multiplayer'
-          element={
-            <ProtectedRoute>
-              <Multiplayer />
-            </ProtectedRoute>
-          }
-        />
-        <Route
-          path='/recommendations'
-          element={
-            <ProtectedRoute>
-              <Recommendations />
-            </ProtectedRoute>
-          }
-        />
-      </Routes>
-    </Router>
+          {/* Protected Routes */}
+          <Route
+            path='/home'
+            element={
+              <ProtectedRoute>
+                <RequireAuth>
+                  <DashboardPage />
+                </RequireAuth>
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path='/quiz/:quizId'
+            element={
+              <ProtectedRoute>
+                <RequireAuth>
+                  <QuizView />
+                </RequireAuth>
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path='/quizzes/:category'
+            element={
+              <ProtectedRoute>
+                <RequireAuth>
+                  <QuizzesPage />
+                </RequireAuth>
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path='/results'
+            element={
+              <ProtectedRoute>
+                <RequireAuth>
+                  <Results score={0} totalQuestions={0} />
+                </RequireAuth>
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path='/timed-quizzes'
+            element={
+              <ProtectedRoute>
+                <RequireAuth>
+                  <TimedQuizzes />
+                </RequireAuth>
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path='/select-difficulty'
+            element={
+              <ProtectedRoute>
+                <RequireAuth>
+                  <MultipleDifficulty />
+                </RequireAuth>
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path='/leaderboards'
+            element={
+              <ProtectedRoute>
+                <RequireAuth>
+                  <Leaderboards />
+                </RequireAuth>
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path='/track-progress'
+            element={
+              <ProtectedRoute>
+                <RequireAuth>
+                  <UserProgress />
+                </RequireAuth>
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path='/multiplayer'
+            element={
+              <ProtectedRoute>
+                <RequireAuth>
+                  <Multiplayer />
+                </RequireAuth>
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path='/recommendations'
+            element={
+              <ProtectedRoute>
+                <RequireAuth>
+                  <Recommendations />
+                </RequireAuth>
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path='/quiz-results/:quizId'
+            element={
+              <ProtectedRoute>
+                <RequireAuth>
+                  <QuizResults />
+                </RequireAuth>
+              </ProtectedRoute>
+            }
+          />
+        </Routes>
+      </Router>
+    </AuthProvider>
   );
 }
 

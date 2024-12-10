@@ -8,6 +8,7 @@ import { useMutation, useQuery } from '@apollo/client';
 import { GET_QUIZ_BY_ID } from '../graphql/queries/quiz';
 import { SUBMIT_QUIZ } from '../graphql/mutations/quiz';
 import ConfirmationDialog from '../components/modals/ConfirmationDialogModal';
+import { useAuth } from '../context/AuthContext';
 
 interface Question {
   id: number;
@@ -20,7 +21,7 @@ interface Quiz {
   id: string;
   title: string;
   description: string;
-  questions: any[];
+  questions: Question[];
 }
 
 const QuizView = () => {
@@ -32,20 +33,61 @@ const QuizView = () => {
   const [showConfirmDialog, setShowConfirmDialog] = useState(false);
   const [submitQuiz, { loading: submitting }] = useMutation(SUBMIT_QUIZ);
   const navigate = useNavigate();
+  const { userId } = useAuth();
 
   const { loading, error, data } = useQuery(GET_QUIZ_BY_ID, {
     variables: { quizId },
   });
 
   useEffect(() => {
-    if (data) {
+    if (data?.quiz) {
       setQuiz(data.quiz);
-      if (data.quiz.questions && Array.isArray(data.quiz.questions)) {
-        setQuestions(data.quiz.questions);
-      }
-      console.log(data);
+      setQuestions(data.quiz.questions || []);
     }
   }, [data]);
+
+  const answeredQuestionsCount = selectedAnswers.filter((answer) => answer !== undefined).length;
+  const progress = quiz ? (answeredQuestionsCount / quiz.questions.length) * 100 : 0;
+  const isLastQuestion = currentQuestion === questions.length - 1;
+
+  const handleAnswerSelect = (optionIndex: number) => {
+    const newAnswers = [...selectedAnswers];
+    newAnswers[currentQuestion] = optionIndex;
+    setSelectedAnswers(newAnswers);
+  };
+
+  const handleNext = () => {
+    if (currentQuestion < questions.length - 1) {
+      setCurrentQuestion((prev) => prev + 1);
+    }
+  };
+
+  const handlePrevious = () => {
+    if (currentQuestion > 0) {
+      setCurrentQuestion((prev) => prev - 1);
+    }
+  };
+
+  const handleConfirmedSubmit = async () => {
+    try {
+      console.log('Submitting quiz with:', { userId, quizId, selectedAnswers });
+      const response = await submitQuiz({
+        variables: {
+          userId,
+          quizId,
+          answers: selectedAnswers,
+        },
+      });
+
+      setShowConfirmDialog(false);
+
+      if (response.data.submitQuiz.success) {
+        navigate(`/quiz-results/${quizId}`);
+      }
+    } catch (err) {
+      console.error('Error submitting quiz:', err);
+    }
+  };
 
   if (loading) {
     return (
@@ -63,51 +105,6 @@ const QuizView = () => {
     );
   }
 
-  const progress = quiz ? ((currentQuestion + 1) / quiz.questions.length) * 100 : 0;
-  const isLastQuestion = quiz ? currentQuestion === quiz.questions.length - 1 : false;
-
-  const handleAnswerSelect = (optionIndex: number) => {
-    const newAnswers = [...selectedAnswers];
-    newAnswers[currentQuestion] = optionIndex;
-    setSelectedAnswers(newAnswers);
-  };
-
-  const handleNext = () => {
-    if (currentQuestion < questions.length - 1) {
-      setCurrentQuestion((curr) => curr + 1);
-    }
-  };
-
-  const handlePrevious = () => {
-    if (currentQuestion > 0) {
-      setCurrentQuestion((curr) => curr - 1);
-    }
-  };
-
-  const handleConfirmedSubmit = async () => {
-    try {
-      const response = await submitQuiz({
-        variables: {
-          quizId,
-          answers: selectedAnswers,
-        },
-      });
-
-      setShowConfirmDialog(false);
-      navigate('/quiz-results', {
-        state: {
-          score: response.data.submitQuiz.score,
-          totalQuestions: questions.length,
-          answers: selectedAnswers,
-          questions: questions,
-          quizTitle: quiz?.title,
-        },
-      });
-    } catch (error) {
-      console.error('Error submitting quiz:', error);
-    }
-  };
-
   return (
     <>
       <div className='min-h-screen bg-slate-100 flex flex-col'>
@@ -118,25 +115,21 @@ const QuizView = () => {
         </div>
 
         <div className='flex-1 flex flex-col items-center justify-center p-4 pt-16'>
-          {/* Question Card */}
-          {questions && questions.length > 0 && questions[currentQuestion] ? (
+          {questions[currentQuestion] && (
             <Card className='w-full max-w-4xl p-6 mb-8'>
               <h2 className='text-2xl font-bold text-center mb-8'>
                 {questions[currentQuestion].question}
               </h2>
 
-              {/* Options Grid */}
               <div className='grid grid-cols-1 md:grid-cols-2 gap-4'>
                 {questions[currentQuestion].options.map((option, index) => (
                   <button
                     key={index}
-                    className={`p-4 rounded-lg text-lg font-medium transition-all
-                    ${
+                    className={`p-4 rounded-lg text-lg font-medium transition-all ${
                       selectedAnswers[currentQuestion] === index
-                        ? 'bg-blue-500 text-white hover:bg-blue-600' // Selected state
-                        : 'bg-slate-100 hover:bg-slate-200 text-gray-700 border border-slate-200' // Unselected state
-                    }
-                  `}
+                        ? 'bg-blue-500 text-white hover:bg-blue-600'
+                        : 'bg-slate-100 hover:bg-slate-200 text-gray-700 border border-slate-200'
+                    }`}
                     onClick={() => handleAnswerSelect(index)}
                   >
                     {option}
@@ -144,15 +137,11 @@ const QuizView = () => {
                 ))}
               </div>
             </Card>
-          ) : (
-            <div>No questions available</div>
           )}
         </div>
 
-        {/* Bottom Navigation Bar */}
         <div className='sticky bottom-0 bg-white border-t'>
           <div className='max-w-7xl mx-auto px-4 py-4 flex items-center justify-between'>
-            {/* Previous Button */}
             <Button
               onClick={handlePrevious}
               disabled={currentQuestion === 0}
@@ -162,7 +151,6 @@ const QuizView = () => {
               Previous
             </Button>
 
-            {/* Progress Bar */}
             <div className='flex-1 mx-8 max-w-md'>
               <Progress value={progress} className='h-2' />
               <p className='text-center text-sm text-gray-500 mt-1'>
@@ -170,12 +158,11 @@ const QuizView = () => {
               </p>
             </div>
 
-            {/* Next/Submit Button */}
             {isLastQuestion ? (
               <Button
                 onClick={() => setShowConfirmDialog(true)}
-                className='flex items-center gap-2'
                 disabled={selectedAnswers.length !== questions.length}
+                className='flex items-center gap-2'
               >
                 Submit Quiz
                 <Send className='h-4 w-4' />
@@ -183,8 +170,8 @@ const QuizView = () => {
             ) : (
               <Button
                 onClick={handleNext}
-                className='flex items-center gap-2'
                 disabled={selectedAnswers[currentQuestion] === undefined}
+                className='flex items-center gap-2'
               >
                 Next
                 <ArrowRight className='h-4 w-4' />
@@ -193,6 +180,7 @@ const QuizView = () => {
           </div>
         </div>
       </div>
+
       <ConfirmationDialog
         isOpen={showConfirmDialog}
         onClose={() => setShowConfirmDialog(false)}

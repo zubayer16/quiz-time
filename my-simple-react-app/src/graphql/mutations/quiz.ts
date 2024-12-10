@@ -1,9 +1,10 @@
 import { gql } from '@apollo/client';
 
 export const SUBMIT_QUIZ = gql`
-  mutation SubmitQuiz($quizId: String!, $answers: [Int!]!) {
-    submitQuiz(quizId: $quizId, answers: $answers) {
-      score
+  mutation SubmitQuiz($userId: ID!, $quizId: ID!, $answers: [Int!]!) {
+    submitQuiz(userId: $userId, quizId: $quizId, answers: $answers) {
+      success
+      message
     }
   }
 `;

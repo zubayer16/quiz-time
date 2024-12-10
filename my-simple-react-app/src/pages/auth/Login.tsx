@@ -1,41 +1,65 @@
 import React, { useState } from 'react';
-import { useNavigate } from 'react-router-dom';
-import './Login.css'; // Ensure your styles accommodate both forms
 import { useMutation } from '@apollo/client';
+import './Login.css';
+import { useNavigate } from 'react-router-dom';
 import { LOGIN_MUTATION } from '../../graphql/mutations/user';
 import { useAuth } from '../../context/AuthContext';
 
-function Login() {
-  const [loginMutatation, { loading, error }] = useMutation(LOGIN_MUTATION);
+//function Login() {
+const Login = () => {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
+  const [loginMutation, { loading, error }] = useMutation(LOGIN_MUTATION);
   const [localError, setLocalError] = useState('');
-  const navigate = useNavigate();
   const { login } = useAuth();
+  const navigate = useNavigate();
 
-  const handleLogin = async (e: React.FormEvent<HTMLFormElement>) => {
+  const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault();
+
     try {
-      const response = await loginMutatation({
-        variables: {
-          email: email,
-          password: password,
-        },
+      const response = await loginMutation({
+        variables: { email, password },
       });
-      // Handle successful login
-      console.log('Login token:', response.data.login);
-      if (response.data.login) {
-        login(response.data.login);
+
+      console.log('Login response:', response);
+
+      if (response.data && response.data.login) {
+        const { token, userId } = response.data.login; // Destructure token and userId
+        login(token, userId); // Pass both arguments to the AuthContext login function
         navigate('/home');
       }
-    } catch (err) {
-      // Handle error
-      setLocalError('Invalid email or password');
-      console.error('Login error:', err);
+    } catch (err: any) {
+      console.error('Error logging in:', err.message);
+      alert('Login failed. Please check your credentials.');
     }
   };
 
-  if (loading) return <div>Loading...</div>;
+  /*return (
+    <form onSubmit={handleLogin}>
+      <div>
+        <label>Email:</label>
+        <input
+          type="email"
+          value={email}
+          onChange={(e) => setEmail(e.target.value)}
+          required
+        />
+      </div>
+      <div>
+        <label>Password:</label>
+        <input
+          type="password"
+          value={password}
+          onChange={(e) => setPassword(e.target.value)}
+          required
+        />
+      </div>
+      <button type="submit">Login</button>
+    </form>
+  );
+};*/
+if (loading) return <div>Loading...</div>;
 
   return (
     <div className='login-container'>
@@ -66,5 +90,4 @@ function Login() {
     </div>
   );
 }
-
 export default Login;
