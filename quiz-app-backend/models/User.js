@@ -7,6 +7,13 @@ const UserSchema = new mongoose.Schema({
   email: { type: String, required: true, unique: true },
   password: { type: String, required: true }, // Store hashed password
   score: { type: Number, default: 0 },
+  quizResults: [
+    {
+      quizId: { type: mongoose.Schema.Types.ObjectId, ref: 'Quiz' },
+      score: { type: Number },
+      submittedAt: { type: Date, default: Date.now },
+    },
+  ],
   createdAt: { type: Date, default: Date.now },
 });
 
