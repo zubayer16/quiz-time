@@ -30,8 +30,8 @@ export const GET_QUIZ_BY_ID = gql`
 `;
 
 export const GET_QUIZ_RESULT = gql`
-  query GetQuizResult($quizId: ID!, $userId: ID!) {
-    getQuizResult(quizId: $quizId, userId: $userId) {
+  query GetQuizResult($submissionId: ID!, $userId: ID!) {
+    getQuizResult(submissionId: $submissionId, userId: $userId) {
       score
       answers
       submittedAt

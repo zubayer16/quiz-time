@@ -82,7 +82,8 @@ const QuizView = () => {
       setShowConfirmDialog(false);
 
       if (response.data.submitQuiz.success) {
-        navigate(`/quiz-results/${quizId}`);
+        const submissionId = response.data.submitQuiz.id;
+        navigate(`/quiz-results/${submissionId}`);
       }
     } catch (err) {
       console.error('Error submitting quiz:', err);

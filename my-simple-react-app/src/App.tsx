@@ -163,7 +163,7 @@ function App() {
             }
           />
           <Route
-            path='/quiz-results/:quizId'
+            path='/quiz-results/:submissionId'
             element={
               <ProtectedRoute>
                 <RequireAuth>

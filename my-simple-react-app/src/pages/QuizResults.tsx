@@ -11,15 +11,16 @@ import { GET_QUIZ_RESULT } from '../graphql/queries/quiz';
 const QuizResults = () => {
   const navigate = useNavigate();
   const { userId } = useAuth();
-  const { quizId } = useParams();
+  const { submissionId } = useParams();
 
   const { loading, error, data } = useQuery(GET_QUIZ_RESULT, {
-    variables: { quizId, userId },
+    variables: { submissionId, userId },
   });
 
   if (loading) return <div>Loading results...</div>;
   if (error) return <div>Error loading results: {error.message}</div>;
 
+  console.log(data);
   const { score, answers, quiz } = data.getQuizResult;
   const percentage = (score / quiz.questions.length) * 100;
 
