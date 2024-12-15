@@ -62,6 +62,7 @@ const UserType = new GraphQLObjectType({
 const SubmitQuizResponseType = new GraphQLObjectType({
   name: "SubmitQuizResponse",
   fields: {
+    id: { type: GraphQLString },
     success: { type: GraphQLBoolean },
     message: { type: GraphQLString },
   },
@@ -129,21 +130,23 @@ const RootQuery = new GraphQLObjectType({
     getQuizResult: {
       type: QuizResultType,
       args: {
-        quizId: { type: GraphQLID },
+        submissionId: { type: GraphQLID },
         userId: { type: GraphQLID },
       },
-      async resolve(parent, { quizId, userId }) {
+      async resolve(parent, { submissionId, userId }) {
         try {
           const user = await User.findById(userId);
           const userQuizResult = user.quizResults.find(
-            (result) => result.quizId.toString() === quizId
+            (result) => result.id.toString() === submissionId
           );
+
+          console.log("User quiz result:", userQuizResult);
 
           if (!userQuizResult) {
             throw new Error("Quiz result not found");
           }
 
-          const quiz = await Quiz.findById(quizId);
+          const quiz = await Quiz.findById(userQuizResult?.quizId);
 
           return {
             score: userQuizResult.score,
@@ -277,24 +280,29 @@ const Mutation = new GraphQLObjectType({
       async resolve(parent, { userId, quizId, answers }) {
         try {
           const quiz = await Quiz.findById(quizId);
-          const score = quiz.questions.reduce(
-            (total, q, i) =>
-              q.correctAnswer === answers[i] ? total + 1 : total,
-            0
-          );
+          const score = quiz.questions.reduce((total, q, i) => {
+            const submittedAnswer = answers[i] + 1;
+            return q.correctAnswer === submittedAnswer ? total + 1 : total;
+          }, 0);
 
-          await User.findByIdAndUpdate(userId, {
-            $push: {
-              quizResults: {
-                quizId,
-                score,
-                answers,
-                submittedAt: new Date().toISOString(),
-              },
-            },
-          });
+          const newQuizResult = {
+            quizId,
+            score,
+            answers,
+            submittedAt: new Date().toISOString(),
+          };
+
+          const user = await User.findById(userId);
+
+          user.quizResults.push(newQuizResult);
+
+          await user.save();
+
+          const submissionId =
+            user.quizResults[user.quizResults.length - 1]._id;
 
           return {
+            id: submissionId, // Return the submission ID
             success: true,
             message: "Quiz submitted successfully",
           };
