@@ -2,10 +2,22 @@ import React from 'react';
 import { Bell, Search, User, BookOpen, Trophy, Clock, TrendingUp } from 'lucide-react';
 import { Card, CardContent, CardHeader, CardTitle } from '../components/ui/card';
 import { useNavigate } from 'react-router-dom';
+import { useAuth } from '../context/AuthContext';
+import { useQuery } from '@apollo/client';
+import { GET_USER_STATS } from '../graphql/queries/user';
 
 const DashboardPage = () => {
   const categories = [{ name: 'Default', quizCount: 1, icon: '🔬' }];
   const navigate = useNavigate();
+  const { userId } = useAuth();
+  const { loading, error, data } = useQuery(GET_USER_STATS, {
+    variables: { userId }
+  });
+
+  if (loading) return <div>Loading stats...</div>;
+  if (error) return <div>Error loading stats</div>;
+
+  const { totalScore, quizzesCompleted, averageScore, lastQuizDate, monthlyProgress } = data.getUserStats;
 
   const handleCategoryClick = (categoryName: string) => {
     navigate(`/quizzes/${categoryName.toLowerCase()}`);
@@ -35,7 +47,7 @@ const DashboardPage = () => {
               <CardTitle className='text-lg'>Total Score</CardTitle>
             </CardHeader>
             <CardContent>
-              <p className='text-2xl font-bold'>2,450</p>
+              <p className='text-2xl font-bold'>{totalScore}</p>
               <p className='text-sm text-gray-500'>Top 10% of users</p>
             </CardContent>
           </Card>
@@ -46,7 +58,7 @@ const DashboardPage = () => {
               <CardTitle className='text-lg'>Quizzes Completed</CardTitle>
             </CardHeader>
             <CardContent>
-              <p className='text-2xl font-bold'>28</p>
+              <p className='text-2xl font-bold'>{quizzesCompleted}</p>
               <p className='text-sm text-gray-500'>Last quiz 2 days ago</p>
             </CardContent>
           </Card>
@@ -57,7 +69,7 @@ const DashboardPage = () => {
               <CardTitle className='text-lg'>Average Score</CardTitle>
             </CardHeader>
             <CardContent>
-              <p className='text-2xl font-bold'>85%</p>
+              <p className='text-2xl font-bold'>{Math.round(averageScore)}</p>
               <p className='text-sm text-gray-500'>+5% this month</p>
             </CardContent>
           </Card>
