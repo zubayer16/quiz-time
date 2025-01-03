@@ -11,6 +11,7 @@ const {
   GraphQLInputObjectType,
   GraphQLBoolean,
   GraphQLID,
+  GraphQLFloat,
 } = require("graphql");
 const Quiz = require("../models/Quiz");
 const User = require("../models/User");
@@ -87,6 +88,16 @@ const QuizResultType = new GraphQLObjectType({
   }),
 });
 
+const UserStatsType = new GraphQLObjectType({
+  name: "UserStats",
+  fields: {
+    totalScore: { type: GraphQLInt },
+    quizzesCompleted: { type: GraphQLInt },
+    averageScore: { type: GraphQLFloat },
+    lastQuizDate: { type: GraphQLString },
+  },
+});
+
 // Root Query
 const RootQuery = new GraphQLObjectType({
   name: "RootQueryType",
@@ -156,6 +167,39 @@ const RootQuery = new GraphQLObjectType({
           };
         } catch (error) {
           throw new Error(`Error fetching quiz result: ${error.message}`);
+        }
+      },
+    },
+    getUserStats: {
+      type: UserStatsType,
+      args: {
+        userId: { type: GraphQLID },
+      },
+      async resolve(parent, { userId }) {
+        try {
+          const user = await User.findById(userId);
+          if (!user) throw new Error("User not found");
+
+          const quizResults = user.quizResults || [];
+          const totalScore = quizResults.reduce(
+            (sum, result) => sum + result.score,
+            0
+          );
+          const quizzesCompleted = quizResults.length;
+          const averageScore =
+            quizzesCompleted > 0 ? totalScore / quizzesCompleted : 0;
+
+          const lastQuiz = quizResults[quizResults.length - 1];
+          const lastQuizDate = lastQuiz ? lastQuiz.submittedAt : null;    
+
+          return {
+            totalScore,
+            quizzesCompleted,
+            averageScore,
+            lastQuizDate,
+          };
+        } catch (error) {
+          throw new Error(`Error fetching user stats: ${error.message}`);
         }
       },
     },
@@ -300,6 +344,14 @@ const Mutation = new GraphQLObjectType({
 
           const submissionId =
             user.quizResults[user.quizResults.length - 1]._id;
+
+          console.log("Quiz submission saved:", {
+            userId,
+            quizId,
+            score,
+            submissionId,
+            answersCount: answers.length,
+          });
 
           return {
             id: submissionId, // Return the submission ID
