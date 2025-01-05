@@ -26,6 +26,7 @@ const DashboardPage = () => {
   const handleCategoryClick = (categoryName: string) => {
     navigate(`/quizzes/${categoryName.toLowerCase()}`);
   };
+  //
  
 
   const recentQuizzes = [
