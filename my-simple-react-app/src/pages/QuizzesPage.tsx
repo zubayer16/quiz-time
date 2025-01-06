@@ -1,10 +1,11 @@
 import React, { useEffect, useState } from 'react';
-import { useNavigate, useParams } from 'react-router-dom';
+import { useParams } from 'react-router-dom';
 import { Card, CardContent, CardHeader, CardTitle } from '../components/ui/card';
 import { Clock, Users, Award } from 'lucide-react';
 import { useQuery } from '@apollo/client';
 import { GET_QUIZZES } from '../graphql/queries/quiz';
 import InstructionsModal from '../components/modals/InstructionsModal';
+import { Button } from '../components/ui/button';
 
 interface Quiz {
   id: string;
@@ -16,7 +17,6 @@ interface Quiz {
 const QuizzesPage = () => {
   const { loading, error, data } = useQuery(GET_QUIZZES);
   const { category } = useParams<{ category: string }>();
-  const navigate = useNavigate();
 
   const [quizzes, setQuizzes] = useState<Quiz[]>([]);
   const [selectedQuiz, setSelectedQuiz] = React.useState<Quiz | null>(null);
@@ -35,29 +35,6 @@ const QuizzesPage = () => {
 
   if (loading) return <p>Loading...</p>;
   if (error) return <p>Error: {error.message}</p>;
-
-  // This would typically come from your API
-  //   const quizzes: Quiz[] = [
-  //     {
-  //       id: '1',
-  //       title: 'Basic JavaScript Concepts',
-  //       description: 'Test your knowledge of JavaScript fundamentals',
-  //       duration: 30,
-  //       questionCount: 20,
-  //       difficulty: 'Easy',
-  //       participants: 1500,
-  //     },
-  //     {
-  //       id: '2',
-  //       title: 'Advanced JavaScript Patterns',
-  //       description: 'Deep dive into advanced JavaScript patterns and concepts',
-  //       duration: 45,
-  //       questionCount: 25,
-  //       difficulty: 'Hard',
-  //       participants: 800,
-  //     },
-  //     // Add more quizzes...
-  //   ];
 
   const getDifficultyColor = (difficulty: string) => {
     switch (difficulty) {
@@ -115,12 +92,9 @@ const QuizzesPage = () => {
                       <span className='text-sm text-gray-500'>
                         {quiz.questions.length} questions
                       </span>
-                      <button
-                        className='text-blue-50 hover:text-blue-200 font-medium'
-                        onClick={() => handleStartQuiz(quiz)}
-                      >
+                      <Button className='font-medium' onClick={() => handleStartQuiz(quiz)}>
                         Start Quiz →
-                      </button>
+                      </Button>
                     </div>
                   </div>
                 </CardContent>

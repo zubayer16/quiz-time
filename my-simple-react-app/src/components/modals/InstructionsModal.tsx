@@ -77,7 +77,7 @@ const InstructionsModal = ({ isOpen, onClose, quiz, isRecommended }: Instruction
           </div>
         </div>
 
-        <DialogFooter className='flex space-x-2 sm:space-x-0'>
+        <DialogFooter className='flex space-x-3 sm:space-x-2'>
           <Button
             variant='outline'
             onClick={onClose}

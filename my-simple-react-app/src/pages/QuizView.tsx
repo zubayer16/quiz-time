@@ -112,7 +112,7 @@ const QuizView = () => {
     <>
       <div className='min-h-screen bg-slate-100 flex flex-col'>
         <div className='fixed top-6 left-0 right-0 z-10'>
-          <div className='text-lg text-gray-700 text-center font-semibold'>
+          <div className='text-lg text-gray-700 ml-6 font-semibold'>
             Question {currentQuestion + 1} of {questions.length}
           </div>
         </div>
