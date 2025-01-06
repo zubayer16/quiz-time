@@ -16,6 +16,10 @@ import QuizzesPage from './pages/QuizzesPage';
 import QuizView from './pages/QuizView';
 import QuizResults from './pages/QuizResults';
 import ProtectedRoute from './components/ProtectedRoute';
+import TimerQuizPage from './pages/TimerQuizPage';
+import QuizPage from './pages/QuizPage'; 
+import HomePage from './pages/Home';
+import AdminPanel from './pages/AdminPanel';
 
 // Shared Navigation Component
 const Navigation = () => {
@@ -51,7 +55,20 @@ const RequireAuth = ({ children }: { children: JSX.Element }) => {
 function App() {
   return (
     <AuthProvider>
-      <Router>
+      <Router>      <Routes>
+        <Route path="/" element={<DashboardPage />} />
+        <Route path="/timer-quiz" element={<TimerQuizPage />} /> // Check this route setup
+      </Routes>
+      <Routes>
+        <Route path="/" element={<DashboardPage />} />
+        <Route path="/quiz" element={<QuizPage />} /> // Set the path for QuizPage
+      </Routes>
+      <Routes>
+      <Route path="/admin" element={<AdminPanel />} />  
+           {/* authentication is not done */}
+
+      </Routes>
+
         <Routes>
           {/* Public Routes */}
           <Route path='/login' element={<Login />} />
@@ -158,7 +175,10 @@ function App() {
                 </RequireAuth>
               </ProtectedRoute>
             }
-          />
+          />    
+   
+     
+
           <Route
             path='/quiz-results/:submissionId'
             element={
