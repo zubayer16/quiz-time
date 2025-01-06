@@ -16,8 +16,8 @@ export const GET_QUIZZES = gql`
 `;
 
 export const GET_QUIZ_BY_ID = gql`
-  query GetQuizById($quizId: String!) {
-    quiz(id: $quizId) {
+  query GetQuizById($quizId: String!, $isRecommended: Boolean) {
+    quiz(id: $quizId, isRecommended: $isRecommended) {
       id
       title
       description
@@ -30,8 +30,8 @@ export const GET_QUIZ_BY_ID = gql`
 `;
 
 export const GET_QUIZ_RESULT = gql`
-  query GetQuizResult($submissionId: ID!, $userId: ID!) {
-    getQuizResult(submissionId: $submissionId, userId: $userId) {
+  query GetQuizResult($submissionId: ID!, $userId: ID!, $isRecommended: Boolean) {
+    getQuizResult(submissionId: $submissionId, userId: $userId, isRecommended: $isRecommended) {
       score
       answers
       submittedAt
@@ -42,6 +42,18 @@ export const GET_QUIZ_RESULT = gql`
           options
           correctAnswer
         }
+      }
+    }
+  }
+`;
+
+export const GET_RECOMMENDED_QUIZ = gql`
+  query GetRecommendedQuiz($userId: ID!) {
+    recommendedQuiz(userId: $userId) {
+      id
+      questions {
+        question
+        options
       }
     }
   }
