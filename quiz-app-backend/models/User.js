@@ -21,6 +21,9 @@ const quizResultSchema = new mongoose.Schema({
     type: String,
     required: true,
   },
+  cluster: {
+    type: Number,
+  },
 });
 
 // Define the User Schema
@@ -30,6 +33,9 @@ const UserSchema = new mongoose.Schema({
   password: { type: String, required: true }, // Store hashed password
   score: { type: Number, default: 0 },
   quizResults: [quizResultSchema],
+  recommendedCluster: { type: Number },
+  firstName: { type: String },
+  lastName: { type: String },
   createdAt: { type: Date, default: Date.now },
 });
 

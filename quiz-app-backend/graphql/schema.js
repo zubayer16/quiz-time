@@ -15,6 +15,7 @@ const {
 } = require("graphql");
 const Quiz = require("../models/Quiz");
 const User = require("../models/User");
+const ClusteredQuestion = require("../models/ClusteredQuestions");
 
 const JWT_SECRET = process.env.JWT_SECRET || "your_jwt_secret";
 
@@ -36,6 +37,18 @@ const QuizType = new GraphQLObjectType({
     title: { type: GraphQLString },
     description: { type: GraphQLString },
     questions: { type: new GraphQLList(QuestionType) },
+  }),
+});
+
+// Clustered Quiz Type
+const RecommendedQuizType = new GraphQLObjectType({
+  name: "RecommendedQuiz",
+  fields: () => ({
+    id: { type: GraphQLString },
+    title: { type: GraphQLString },
+    description: { type: GraphQLString },
+    questions: { type: new GraphQLList(QuestionType) },
+    cluster: { type: GraphQLInt },
   }),
 });
 
@@ -104,8 +117,14 @@ const RootQuery = new GraphQLObjectType({
   fields: {
     quiz: {
       type: QuizType,
-      args: { id: { type: GraphQLString } },
+      args: {
+        id: { type: GraphQLString },
+        isRecommended: { type: GraphQLBoolean },
+      },
       resolve(parent, args) {
+        if (args.isRecommended) {
+          return ClusteredQuestion.findById(args.id);
+        }
         return Quiz.findById(args.id);
       },
     },
@@ -113,6 +132,31 @@ const RootQuery = new GraphQLObjectType({
       type: new GraphQLList(QuizType),
       resolve() {
         return Quiz.find();
+      },
+    },
+    recommendedQuiz: {
+      type: RecommendedQuizType,
+      args: { userId: { type: GraphQLID } },
+      async resolve(_, { userId }) {
+        try {
+          const user = await User.findById(userId);
+          if (!user || !user.recommendedCluster) {
+            throw new Error("No recommended quiz available for this user.");
+          }
+
+          const clusteredQuiz = await ClusteredQuestion.findOne({
+            cluster: user.recommendedCluster,
+          });
+          if (!clusteredQuiz) {
+            throw new Error("No questions found for the recommended cluster.");
+          }
+
+          // Map "prompt" to "question" to match the GraphQL schema
+          return clusteredQuiz;
+        } catch (error) {
+          console.error("Error fetching recommended quiz:", error.message);
+          throw new Error(error.message);
+        }
       },
     },
     user: {
@@ -143,8 +187,9 @@ const RootQuery = new GraphQLObjectType({
       args: {
         submissionId: { type: GraphQLID },
         userId: { type: GraphQLID },
+        isRecommended: { type: GraphQLBoolean },
       },
-      async resolve(parent, { submissionId, userId }) {
+      async resolve(parent, { submissionId, userId, isRecommended }) {
         try {
           const user = await User.findById(userId);
           const userQuizResult = user.quizResults.find(
@@ -156,8 +201,12 @@ const RootQuery = new GraphQLObjectType({
           if (!userQuizResult) {
             throw new Error("Quiz result not found");
           }
+          let quiz = null;
+          quiz = await Quiz.findById(userQuizResult?.quizId);
 
-          const quiz = await Quiz.findById(userQuizResult?.quizId);
+          if (isRecommended) {
+            quiz = await ClusteredQuestion.findById(userQuizResult?.quizId);
+          }
 
           return {
             score: userQuizResult.score,
@@ -190,7 +239,7 @@ const RootQuery = new GraphQLObjectType({
             quizzesCompleted > 0 ? totalScore / quizzesCompleted : 0;
 
           const lastQuiz = quizResults[quizResults.length - 1];
-          const lastQuizDate = lastQuiz ? lastQuiz.submittedAt : null;    
+          const lastQuizDate = lastQuiz ? lastQuiz.submittedAt : null;
 
           return {
             totalScore,
@@ -217,8 +266,10 @@ const Mutation = new GraphQLObjectType({
         username: { type: new GraphQLNonNull(GraphQLString) },
         email: { type: new GraphQLNonNull(GraphQLString) },
         password: { type: new GraphQLNonNull(GraphQLString) },
+        firstName: { type: GraphQLString },
+        lastName: { type: GraphQLString },
       },
-      async resolve(_, { username, email, password }) {
+      async resolve(_, { username, email, password, firstName, lastName }) {
         const existingUser = await User.findOne({ email });
         if (existingUser) {
           throw new Error("User already exists");
@@ -226,7 +277,13 @@ const Mutation = new GraphQLObjectType({
 
         const hashedPassword = await bcrypt.hash(password, 10);
         console.log("Hashed password:", hashedPassword);
-        const user = new User({ username, email, password: hashedPassword });
+        const user = new User({
+          username,
+          email,
+          password: hashedPassword,
+          firstName,
+          lastName,
+        });
         await user.save();
         return "User registered successfully";
       },
@@ -255,9 +312,13 @@ const Mutation = new GraphQLObjectType({
           throw new Error("Invalid credentials");
         }
 
-        const token = jwt.sign({ userId: user._id }, JWT_SECRET, {
-          expiresIn: "1h",
-        });
+        const token = jwt.sign(
+          { userId: user._id, firstName: user.firstName },
+          JWT_SECRET,
+          {
+            expiresIn: "1h",
+          }
+        );
 
         return {
           token, // Return the JWT
@@ -314,7 +375,7 @@ const Mutation = new GraphQLObjectType({
         return quiz;
       },
     },
-    submitQuiz: {
+    /*submitQuiz: {
       type: SubmitQuizResponseType,
       args: {
         userId: { type: GraphQLID },
@@ -363,6 +424,116 @@ const Mutation = new GraphQLObjectType({
             success: false,
             message: error.message,
           };
+        }
+      },
+    },*/
+
+    submitQuiz: {
+      type: new GraphQLObjectType({
+        name: "SubmitQuizResponseWithCluster",
+        fields: {
+          id: { type: GraphQLString },
+          success: { type: GraphQLBoolean },
+          message: { type: GraphQLString },
+          cluster: { type: GraphQLInt },
+          questions: {
+            type: new GraphQLList(
+              new GraphQLObjectType({
+                name: "ClusterQuestion",
+                fields: {
+                  prompt: { type: GraphQLString },
+                  options: { type: new GraphQLList(GraphQLString) },
+                  correctAnswer: { type: GraphQLString },
+                },
+              })
+            ),
+          },
+        },
+      }),
+      args: {
+        userId: { type: GraphQLID },
+        quizId: { type: GraphQLID },
+        answers: { type: new GraphQLList(GraphQLInt) },
+        isRecommended: { type: GraphQLBoolean },
+      },
+      async resolve(parent, { userId, quizId, answers, isRecommended }) {
+        try {
+          // Validate user
+          let quiz = null;
+          const user = await User.findById(userId);
+          if (!user) throw new Error("User not found");
+
+          // Fetch quiz and calculate score
+          quiz = await Quiz.findById(quizId);
+
+          if (isRecommended) {
+            quiz = await ClusteredQuestion.findById(quizId);
+          }
+
+          console.log(quiz);
+
+          if (!quiz) throw new Error("Quiz not found");
+
+          const score = quiz.questions.reduce((total, q, i) => {
+            console.log("submitted answer: ", answers[i]);
+            console.log("submitted answer type: ", typeof answers[i]);
+            console.log("actual answer: ", answers[i] + 1);
+            console.log("actual answer type: ", typeof (answers[i] + 1));
+            const submittedAnswer = answers[i] + 1;
+            console.log(q.correctAnswer === submittedAnswer);
+            console.log(typeof q.correctAnswer);
+            return q.correctAnswer === submittedAnswer ? total + 1 : total;
+          }, 0);
+
+          // Call Swagger API to predict cluster
+          const firstQuestion = quiz.questions[0];
+          const axiosResponse = await axios.post(
+            "http://localhost:8000/predict-cluster/",
+            {
+              prompt: firstQuestion.question,
+              options: firstQuestion.options,
+            }
+          );
+          const clusterId = axiosResponse.data.cluster;
+
+          // Fetch questions for the cluster
+          const clusterData = await ClusteredQuestion.findOne({
+            cluster: clusterId,
+          });
+          const questions = clusterData
+            ? clusterData.questions.slice(0, 5)
+            : [];
+
+          // Add quiz result to user
+          const newQuizResult = {
+            quizId,
+            score,
+            answers,
+            cluster: clusterId,
+            submittedAt: new Date().toISOString(),
+          };
+
+          user.quizResults.push(newQuizResult);
+          user.recommendedCluster = clusterId;
+          await user.save();
+
+          // Safely retrieve the submission ID
+          const savedResult = user.quizResults[user.quizResults.length - 1];
+          if (!savedResult || !savedResult._id) {
+            throw new Error("Failed to save quiz result.");
+          }
+
+          return {
+            id: savedResult._id.toString(),
+            success: true,
+            message: "Quiz submitted successfully",
+            cluster: clusterId,
+            questions,
+          };
+        } catch (error) {
+          console.error("Error in submitQuiz:", error.message);
+          console.error("Error:", error);
+          throw new Error(`Failed to submit quiz: ${error.message}`);
         }
       },
     },
