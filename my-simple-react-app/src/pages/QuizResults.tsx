@@ -2,7 +2,7 @@ import React from 'react';
 import { Card, CardHeader, CardTitle, CardContent } from '../components/ui/card';
 import { Progress } from '../components/ui/progress';
 import { Button } from '../components/ui/button';
-import { useNavigate, useParams } from 'react-router-dom';
+import { useLocation, useNavigate, useParams } from 'react-router-dom';
 import { Award, CheckCircle2, XCircle, Home } from 'lucide-react';
 import { useAuth } from '../context/AuthContext';
 import { useQuery } from '@apollo/client';
@@ -12,15 +12,16 @@ const QuizResults = () => {
   const navigate = useNavigate();
   const { userId } = useAuth();
   const { submissionId } = useParams();
+  const location = useLocation();
+  const isRecommended = location.state?.isRecommended || false;
 
   const { loading, error, data } = useQuery(GET_QUIZ_RESULT, {
-    variables: { submissionId, userId },
+    variables: { submissionId, userId, isRecommended },
   });
 
   if (loading) return <div>Loading results...</div>;
   if (error) return <div>Error loading results: {error.message}</div>;
 
-  console.log(data);
   const { score, answers, quiz } = data.getQuizResult;
   const percentage = (score / quiz.questions.length) * 100;
 
