@@ -1,3 +1,4 @@
+import { jwtDecode } from 'jwt-decode';
 import React, { createContext, useContext, useState, useEffect } from 'react';
 
 // Define the shape of the AuthContext
@@ -5,8 +6,13 @@ interface AuthContextType {
   isAuthenticated: boolean;
   token: string | null;
   userId: string | null;
+  firstName: string | null;
   login: (token: string, userId: string) => void;
   logout: () => void;
+}
+
+interface DecodedToken {
+  firstName: string;
 }
 
 // Create the AuthContext
@@ -15,35 +21,48 @@ const AuthContext = createContext<AuthContextType | undefined>(undefined);
 export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
   const [token, setToken] = useState<string | null>(localStorage.getItem('token'));
   const [userId, setUserId] = useState<string | null>(localStorage.getItem('userId'));
+  const [firstName, setFirstName] = useState<string | null>(null);
 
   // Effect to synchronize token and userId with localStorage
   //useEffect(() => {
-    //if (token) {
-      //localStorage.setItem('token', token);
-   // } else {
-      //localStorage.removeItem('token');
-   // }
+  //if (token) {
+  //localStorage.setItem('token', token);
+  // } else {
+  //localStorage.removeItem('token');
+  // }
 
-    //if (userId) {
-     // localStorage.setItem('userId', userId);
-    //} else {
-     // localStorage.removeItem('userId');
-    //}
+  //if (userId) {
+  // localStorage.setItem('userId', userId);
+  //} else {
+  // localStorage.removeItem('userId');
+  //}
   //}, [token, userId]);
   // Load userId from localStorage when the app initializes
   useEffect(() => {
     const storedUserId = localStorage.getItem('userId');
     if (storedUserId) {
-      console.log('Loaded userId from localStorage:', storedUserId); 
       setUserId(storedUserId);
     }
   }, []);
 
+  useEffect(() => {
+    if (token) {
+      try {
+        const decoded: DecodedToken = jwtDecode(token);
+        setFirstName(decoded.firstName || null);
+      } catch (error) {
+        console.error('Invalid token', error);
+        setFirstName(null);
+      }
+    } else {
+      setFirstName(null);
+    }
+  }, [token]);
+
   // Login function to store token and userId
   const login = (newToken: string, newUserId: string) => {
-    console.log('Saving userId:', newUserId);
-  localStorage.setItem('token', newToken);
-  localStorage.setItem('userId', newUserId);
+    localStorage.setItem('token', newToken);
+    localStorage.setItem('userId', newUserId);
     setToken(newToken);
     setUserId(newUserId);
   };
@@ -52,6 +71,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   const logout = () => {
     setToken(null);
     setUserId(null);
+    setFirstName(null);
   };
 
   return (
@@ -60,6 +80,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         isAuthenticated: !!token,
         token,
         userId,
+        firstName,
         login,
         logout,
       }}
