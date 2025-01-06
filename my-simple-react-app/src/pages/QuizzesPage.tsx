@@ -28,7 +28,6 @@ const QuizzesPage = () => {
   };
 
   useEffect(() => {
-    console.log(data);
     if (data) {
       setQuizzes(data.quizzes);
     }
@@ -133,6 +132,7 @@ const QuizzesPage = () => {
       {selectedQuiz && (
         <InstructionsModal
           isOpen={showInstructions}
+          isRecommended={false}
           onClose={() => setShowInstructions(false)}
           quiz={selectedQuiz}
         />

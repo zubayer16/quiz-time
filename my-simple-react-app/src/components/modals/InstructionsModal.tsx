@@ -14,6 +14,7 @@ import { ClipboardList, Clock, AlertCircle } from 'lucide-react';
 interface InstructionsModalProps {
   isOpen: boolean;
   onClose: () => void;
+  isRecommended?: boolean;
   quiz: {
     id: string;
     title: string;
@@ -21,12 +22,14 @@ interface InstructionsModalProps {
   };
 }
 
-const InstructionsModal = ({ isOpen, onClose, quiz }: InstructionsModalProps) => {
+const InstructionsModal = ({ isOpen, onClose, quiz, isRecommended }: InstructionsModalProps) => {
   const navigate = useNavigate();
 
   const startQuiz = () => {
     onClose();
-    navigate(`/quiz/${quiz.id}`);
+    navigate(`/quiz/${quiz.id}`, {
+      state: { isRecommended },
+    });
   };
 
   return (

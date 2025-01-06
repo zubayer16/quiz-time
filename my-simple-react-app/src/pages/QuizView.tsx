@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from 'react';
-import { useNavigate, useParams } from 'react-router-dom';
+import { useNavigate, useParams, useLocation } from 'react-router-dom';
 import { Card } from '../components/ui/card';
 import { Button } from '../components/ui/button';
 import { Progress } from '../components/ui/progress';
@@ -26,6 +26,7 @@ interface Quiz {
 
 const QuizView = () => {
   const { quizId } = useParams<{ quizId: string }>();
+  const location = useLocation(); // Use location to check for recommended quiz data
   const [currentQuestion, setCurrentQuestion] = useState(0);
   const [selectedAnswers, setSelectedAnswers] = useState<number[]>([]);
   const [questions, setQuestions] = useState<Question[]>([]);
@@ -34,9 +35,10 @@ const QuizView = () => {
   const [submitQuiz, { loading: submitting }] = useMutation(SUBMIT_QUIZ);
   const navigate = useNavigate();
   const { userId } = useAuth();
+  const isRecommended = location.state?.isRecommended;
 
   const { loading, error, data } = useQuery(GET_QUIZ_BY_ID, {
-    variables: { quizId },
+    variables: { quizId, isRecommended },
   });
 
   useEffect(() => {
@@ -70,12 +72,12 @@ const QuizView = () => {
 
   const handleConfirmedSubmit = async () => {
     try {
-      console.log('Submitting quiz with:', { userId, quizId, selectedAnswers });
       const response = await submitQuiz({
         variables: {
           userId,
           quizId,
           answers: selectedAnswers,
+          isRecommended,
         },
       });
 
@@ -83,7 +85,7 @@ const QuizView = () => {
 
       if (response.data.submitQuiz.success) {
         const submissionId = response.data.submitQuiz.id;
-        navigate(`/quiz-results/${submissionId}`);
+        navigate(`/quiz-results/${submissionId}`, { state: { isRecommended: isRecommended } });
       }
     } catch (err) {
       console.error('Error submitting quiz:', err);

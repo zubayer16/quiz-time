@@ -1,26 +1,71 @@
-import React from 'react';
-import { Bell, Search, User, BookOpen, Trophy, Clock, TrendingUp } from 'lucide-react';
+import React, { useEffect, useState } from 'react';
+import { BookOpen, Trophy, TrendingUp } from 'lucide-react';
 import { Card, CardContent, CardHeader, CardTitle } from '../components/ui/card';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
 import { useQuery } from '@apollo/client';
 import { GET_USER_STATS } from '../graphql/queries/user';
+import { GET_RECOMMENDED_QUIZ } from '../graphql/queries/quiz';
+import InstructionsModal from '../components/modals/InstructionsModal';
+
+interface Question {
+  id: number;
+  question: string;
+  options: string[];
+  correctAnswer?: number;
+}
+
+interface RecommendedQuiz {
+  id: string;
+  title: string;
+  description: string;
+  questions: Question[];
+}
 
 const DashboardPage = () => {
   const categories = [{ name: 'Default', quizCount: 1, icon: '🔬' }];
   const navigate = useNavigate();
-  const { userId } = useAuth();
-  const { loading, error, data } = useQuery(GET_USER_STATS, {
-    variables: { userId }
+  const { userId, firstName } = useAuth();
+  const {
+    loading: statsLoading,
+    error: statsError,
+    data: statsData,
+  } = useQuery(GET_USER_STATS, {
+    variables: { userId },
   });
 
-  if (loading) return <div>Loading stats...</div>;
-  if (error) return <div>Error loading stats</div>;
+  // Fetch the recommended quiz
+  const {
+    loading: recommendedLoading,
+    error: recommendedError,
+    data: recommendedData,
+  } = useQuery(GET_RECOMMENDED_QUIZ, {
+    variables: { userId },
+    skip: !userId,
+  });
 
-  const { totalScore, quizzesCompleted, averageScore, lastQuizDate, monthlyProgress } = data.getUserStats;
+  const [recommendedQuiz, setRecommendedQuiz] = useState<RecommendedQuiz>();
+  const [showInstructions, setShowInstructions] = React.useState(false);
+
+  useEffect(() => {
+    if (recommendedData?.recommendedQuiz) {
+      setRecommendedQuiz(recommendedData.recommendedQuiz);
+    }
+  }, [recommendedData]);
+
+  if (statsLoading) return <div>Loading stats...</div>;
+  if (statsError) return <div>Error loading stats</div>;
+
+  const { totalScore, quizzesCompleted, averageScore, lastQuizDate, monthlyProgress } =
+    statsData.getUserStats;
 
   const handleCategoryClick = (categoryName: string) => {
     navigate(`/quizzes/${categoryName.toLowerCase()}`);
+  };
+
+  const handleRecommendedQuiz = () => {
+    // Navigate to quiz view with the recommended questions
+    setShowInstructions(true);
   };
 
   const recentQuizzes = [
@@ -35,7 +80,9 @@ const DashboardPage = () => {
         {/* Hero Section */}
         <div className='mb-8'>
           {/*TODO: Decode the token and fetch userId from the token and then fetch user data from the database*/}
-          <h1 className='text-3xl font-bold text-gray-900'>Welcome back, Alex! 👋</h1>
+          <h1 className='text-3xl font-bold text-gray-900'>
+            Welcome back {firstName ? firstName : ''} 👋
+          </h1>
           <p className='mt-2 text-gray-600'>Ready to challenge yourself today?</p>
         </div>
 
@@ -92,10 +139,31 @@ const DashboardPage = () => {
                 </CardContent>
               </Card>
             ))}
+            {/* Recommended Quiz */}
+            {recommendedQuiz && (
+              <Card
+                className='hover:shadow-lg transition-shadow cursor-pointer'
+                onClick={handleRecommendedQuiz}
+              >
+                <CardContent className='p-6'>
+                  <div className='text-4xl mb-4'>⭐</div>
+                  <h3 className='font-semibold text-lg'>Recommended Quiz</h3>
+                  <p className='text-sm text-gray-500'>Based on your last attempt</p>
+                </CardContent>
+              </Card>
+            )}
           </div>
+          {recommendedQuiz && (
+            <InstructionsModal
+              isOpen={showInstructions}
+              isRecommended={true}
+              onClose={() => setShowInstructions(false)}
+              quiz={recommendedQuiz}
+            />
+          )}
         </section>
 
-        {/* Recent Activity Section */}
+        {/* Recent Activity Section 
         <section>
           <h2 className='text-2xl font-bold text-gray-900 mb-4'>Continue Learning</h2>
           <div className='space-y-4'>
@@ -123,6 +191,7 @@ const DashboardPage = () => {
             ))}
           </div>
         </section>
+        */}
       </main>
     </div>
   );
