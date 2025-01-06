@@ -39,7 +39,6 @@ const LandingPage = () => {
   ];
 
   const handleSignIn = () => {
-    console.log('Sign in clicked');
     navigate('/login');
   };
 

@@ -10,7 +10,6 @@ function Quiz() {
     const [quizzes, setQuizzes] = useState([]);
     
     useEffect(() => {
-        console.log(data);
         if (data) {
             setQuizzes(data.quizzes);
         }
