@@ -23,11 +23,11 @@ function Header() {
               Home
             </Link>
           </li>
-          <li style={styles.navItem}>
+          {/* <li style={styles.navItem}>
             <Link to='/quiz' style={styles.navLink}>
               Quiz
             </Link>
-          </li>
+          </li> */}
           {/* <li style={styles.navItem}>
             <Link to='/results' style={styles.navLink}>
               Results
