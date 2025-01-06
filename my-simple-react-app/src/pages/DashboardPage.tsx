@@ -71,12 +71,6 @@ const DashboardPage = () => {
     setShowInstructions(true);
   };
 
-  const recentQuizzes = [
-    { name: 'Basic Chemistry', progress: '80%', timeLeft: '2 days' },
-    { name: 'World History II', progress: '60%', timeLeft: '1 day' },
-    { name: 'Python Basics', progress: '40%', timeLeft: '3 days' },
-  ];
-
   const handleTimedQuizClick = () => {
     // Navigate to the timed quiz page or initiate the quiz
     navigate('/quiz'); // Make sure this route is configured in your router
@@ -143,7 +137,7 @@ const DashboardPage = () => {
                 <CardContent className='p-6'>
                   <div className='text-4xl mb-4'>{category.icon}</div>
                   <h3 className='font-semibold text-lg'>{category.name}</h3>
-                  <p className='text-sm text-gray-500'>{category.quizCount} quizzes</p>
+                  {/* <p className='text-sm text-gray-500'>{category.quizCount} quizzes</p> */}
                 </CardContent>
               </Card>
             ))}
