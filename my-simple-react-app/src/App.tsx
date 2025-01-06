@@ -1,10 +1,7 @@
 import React from 'react';
 import { BrowserRouter as Router, Routes, Route } from 'react-router-dom';
 import { AuthProvider, useAuth } from './context/AuthContext';
-import Home from './pages/Home';
 import Login from './pages/auth/Login';
-import Quiz from './pages/Quiz';
-import QuizCategory from './pages/QuizCategory';
 import Results from './pages/Results';
 import TimedQuizzes from './pages/features/TimedQuizzes';
 import MultipleDifficulty from './pages/features/MultipleDifficulty';
