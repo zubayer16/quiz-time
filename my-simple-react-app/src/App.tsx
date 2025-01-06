@@ -58,11 +58,9 @@ function App() {
       <Router>
         {' '}
         <Routes>
-          <Route path='/' element={<DashboardPage />} />
           <Route path='/timer-quiz' element={<TimerQuizPage />} /> // Check this route setup
         </Routes>
         <Routes>
-          <Route path='/' element={<DashboardPage />} />
           <Route path='/quiz' element={<QuizPage />} /> // Set the path for QuizPage
         </Routes>
         <Routes>
