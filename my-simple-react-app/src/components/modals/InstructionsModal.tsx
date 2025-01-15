@@ -22,6 +22,11 @@ interface InstructionsModalProps {
     description: string;
     isTimedQuiz?: Boolean;
     quizTime?: number;
+    questions: {
+      id: number;
+      question: string;
+      options: string[];
+    }[];
   };
 }
 
@@ -63,7 +68,8 @@ const InstructionsModal = ({
             <div>
               <p className='font-medium'>Quiz Details</p>
               <p className='text-sm text-gray-500'>
-                10 questions • {quiz.isTimedQuiz ? quiz.quizTime + ' minutes' : 'No time limit'}
+                {quiz.questions?.length || 0} questions •{' '}
+                {quiz.isTimedQuiz ? quiz.quizTime + ' minutes' : 'No time limit'}
               </p>
             </div>
           </div>

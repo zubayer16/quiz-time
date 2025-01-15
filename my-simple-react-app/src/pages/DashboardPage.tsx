@@ -35,8 +35,10 @@ const DashboardPage = () => {
     loading: statsLoading,
     error: statsError,
     data: statsData,
+    refetch: refetchStats,
   } = useQuery(GET_USER_STATS, {
     variables: { userId },
+    fetchPolicy: 'network-only', // Don't use cache
   });
 
   // Fetch the recommended quiz
@@ -44,9 +46,11 @@ const DashboardPage = () => {
     loading: recommendedLoading,
     error: recommendedError,
     data: recommendedData,
+    refetch: refetchRecommended,
   } = useQuery(GET_RECOMMENDED_QUIZ, {
     variables: { userId },
     skip: !userId,
+    fetchPolicy: 'network-only', // Don't use cache
   });
 
   const [recommendedQuiz, setRecommendedQuiz] = useState<RecommendedQuiz>();
@@ -57,6 +61,26 @@ const DashboardPage = () => {
       setRecommendedQuiz(recommendedData.recommendedQuiz);
     }
   }, [recommendedData]);
+
+  useEffect(() => {
+    const handleVisibilityChange = () => {
+      if (document.visibilityState === 'visible') {
+        refetchStats();
+        refetchRecommended();
+      }
+    };
+
+    // Refetch on mount
+    refetchStats();
+    refetchRecommended();
+
+    // Add visibility change listener
+    document.addEventListener('visibilitychange', handleVisibilityChange);
+
+    return () => {
+      document.removeEventListener('visibilitychange', handleVisibilityChange);
+    };
+  }, [refetchStats, refetchRecommended]);
 
   if (statsLoading) return <div>Loading stats...</div>;
   if (statsError) return <div>Error loading stats</div>;

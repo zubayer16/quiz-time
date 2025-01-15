@@ -60,6 +60,7 @@ const TimedQuizView = () => {
         quizId: quizId as string,
       };
       localStorage.setItem(`quiz_session_${quizId}`, JSON.stringify(sessionData));
+      return quizTime; // Return the quiz time
     },
     [quizId],
   );
@@ -96,18 +97,26 @@ const TimedQuizView = () => {
       setQuiz(data.quiz);
       setQuestions(data.quiz.questions || []);
 
-      // Check for existing session
-      const existingSession = getQuizSession();
+      const initializeQuizTimer = () => {
+        // Check for existing session
+        const existingSession = getQuizSession();
 
-      if (existingSession !== null) {
-        // Resume from existing session
-        setTimeRemaining(existingSession);
-      } else if (data.quiz.quizTime) {
-        // Start new session
-        const quizTime = data.quiz.quizTime * 60;
-        setTimeRemaining(quizTime);
-        storeQuizSession(quizTime, quizTime);
-      }
+        if (existingSession !== null && existingSession > 0) {
+          // Resume from existing session
+          setTimeRemaining(existingSession);
+          return;
+        }
+
+        // Start new session if quiz has a time limit
+        if (data.quiz.quizTime) {
+          const quizTimeInSeconds = data.quiz.quizTime * 60;
+          setTimeRemaining(quizTimeInSeconds);
+          storeQuizSession(quizTimeInSeconds, quizTimeInSeconds);
+        }
+      };
+
+      // Initialize timer immediately
+      initializeQuizTimer();
     }
   }, [data, getQuizSession, storeQuizSession]);
 
@@ -126,12 +135,19 @@ const TimedQuizView = () => {
     }
   }, [quizId]);
 
+  const handleTimeUp = useCallback(async () => {
+    clearQuizSession();
+    await handleConfirmedSubmit();
+  }, [selectedAnswers, clearQuizSession]);
+
   // Timer countdown effect
   useEffect(() => {
-    if (!timeRemaining) return;
+    if (timeRemaining === undefined || timeRemaining === null) return;
 
     const timer = setInterval(() => {
       setTimeRemaining((prevTime) => {
+        if (prevTime === undefined || prevTime === null) return 0;
+
         const newTime = prevTime - 1;
 
         if (newTime <= 300 && !isTimeWarning) {
@@ -149,12 +165,7 @@ const TimedQuizView = () => {
     }, 1000);
 
     return () => clearInterval(timer);
-  }, [timeRemaining]);
-
-  const handleTimeUp = useCallback(async () => {
-    clearQuizSession();
-    await handleConfirmedSubmit();
-  }, [selectedAnswers, clearQuizSession]);
+  }, [timeRemaining, isTimeWarning, handleTimeUp]);
 
   const formatTime = (seconds: number): string => {
     const minutes = Math.floor(seconds / 60);

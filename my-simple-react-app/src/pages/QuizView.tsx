@@ -284,10 +284,10 @@ const QuizView = () => {
             <ul className='text-sm space-y-1 text-gray-600'>
               <li>• Total Questions: {questions.length}</li>
               <li>• Answered Questions: {selectedAnswers.filter((a) => a !== undefined).length}</li>
-              <li>
+              {/*<li>
                 • Unanswered Questions:{' '}
                 {questions.length - selectedAnswers.filter((a) => a !== undefined).length}
-              </li>
+              </li>*/}
             </ul>
           </div>
         </ConfirmationDialog>
