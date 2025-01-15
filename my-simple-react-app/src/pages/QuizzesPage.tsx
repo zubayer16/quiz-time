@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from 'react';
-import { useParams } from 'react-router-dom';
+import { useParams, useLocation } from 'react-router-dom';
 import { Card, CardContent, CardHeader, CardTitle } from '../components/ui/card';
 import { Clock, Users, Award } from 'lucide-react';
 import { useQuery } from '@apollo/client';
@@ -11,11 +11,19 @@ interface Quiz {
   id: string;
   title: string;
   description: string;
+  isTimedQuiz: Boolean;
+  quizTime: number;
   questions: any[];
 }
 
 const QuizzesPage = () => {
-  const { loading, error, data } = useQuery(GET_QUIZZES);
+  const location = useLocation();
+  const { isTimedQuiz } = location.state || { isTimedQuiz: false };
+  const { loading, error, data } = useQuery(GET_QUIZZES, {
+    variables: {
+      isTimedQuiz: isTimedQuiz,
+    },
+  });
   const { category } = useParams<{ category: string }>();
 
   const [quizzes, setQuizzes] = useState<Quiz[]>([]);
@@ -54,7 +62,7 @@ const QuizzesPage = () => {
       <div className='min-h-screen bg-gray-50 p-6'>
         <div className='max-w-7xl mx-auto'>
           <div className='mb-8'>
-            <h1 className='text-3xl font-bold text-gray-900 capitalize'>{category} Quizzes</h1>
+            <h1 className='text-3xl font-bold text-gray-900 capitalize'>{category} </h1>
             <p className='text-gray-600 mt-2'>Choose a quiz to test your knowledge</p>
           </div>
 
@@ -73,17 +81,12 @@ const QuizzesPage = () => {
                   <div className='space-y-2'>
                     <div className='flex items-center text-sm text-gray-500'>
                       <Clock className='h-4 w-4 mr-2' />
-                      45 minutes
+                      {isTimedQuiz ? quiz?.quizTime + ' minutes' : 'No time limit'}
                     </div>
 
                     <div className='flex items-center text-sm text-gray-500'>
                       <Award className='h-4 w-4 mr-2' />
                       <span className={getDifficultyColor('Medium')}>Medium</span>
-                    </div>
-
-                    <div className='flex items-center text-sm text-gray-500'>
-                      <Users className='h-4 w-4 mr-2' />
-                      100 participants
                     </div>
                   </div>
 
@@ -109,6 +112,7 @@ const QuizzesPage = () => {
           isRecommended={false}
           onClose={() => setShowInstructions(false)}
           quiz={selectedQuiz}
+          isTimedQuiz={isTimedQuiz}
         />
       )}
     </>

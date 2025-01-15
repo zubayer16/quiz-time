@@ -20,6 +20,7 @@ import TimerQuizPage from './pages/TimerQuizPage';
 import QuizPage from './pages/QuizPage';
 import HomePage from './pages/Home';
 import AdminPanel from './pages/AdminPanel';
+import TimedQuizView from './pages/TimedQuizView';
 
 // Shared Navigation Component
 const Navigation = () => {
@@ -90,6 +91,16 @@ function App() {
               <ProtectedRoute showHeader={false}>
                 <RequireAuth>
                   <QuizView />
+                </RequireAuth>
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path='/timed-quiz/:quizId'
+            element={
+              <ProtectedRoute showHeader={false}>
+                <RequireAuth>
+                  <TimedQuizView />
                 </RequireAuth>
               </ProtectedRoute>
             }

@@ -1,11 +1,13 @@
 import { gql } from '@apollo/client';
 
 export const GET_QUIZZES = gql`
-  query GetQuizzes {
-    quizzes {
+  query GetQuizzes($isTimedQuiz: Boolean) {
+    quizzes(isTimedQuiz: $isTimedQuiz) {
       id
       title
       description
+      isTimedQuiz
+      quizTime
       questions {
         question
         options
@@ -21,6 +23,8 @@ export const GET_QUIZ_BY_ID = gql`
       id
       title
       description
+      isTimedQuiz
+      quizTime
       questions {
         question
         options

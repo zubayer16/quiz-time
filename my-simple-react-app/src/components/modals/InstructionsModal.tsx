@@ -15,21 +15,36 @@ interface InstructionsModalProps {
   isOpen: boolean;
   onClose: () => void;
   isRecommended?: boolean;
+  isTimedQuiz?: boolean;
   quiz: {
     id: string;
     title: string;
     description: string;
+    isTimedQuiz?: Boolean;
+    quizTime?: number;
   };
 }
 
-const InstructionsModal = ({ isOpen, onClose, quiz, isRecommended }: InstructionsModalProps) => {
+const InstructionsModal = ({
+  isOpen,
+  onClose,
+  quiz,
+  isRecommended,
+  isTimedQuiz,
+}: InstructionsModalProps) => {
   const navigate = useNavigate();
+
+  console.log(isTimedQuiz);
 
   const startQuiz = () => {
     onClose();
-    navigate(`/quiz/${quiz.id}`, {
-      state: { isRecommended },
-    });
+    if (isTimedQuiz) {
+      navigate(`/timed-quiz/${quiz.id}`);
+    } else {
+      navigate(`/quiz/${quiz.id}`, {
+        state: { isRecommended },
+      });
+    }
   };
 
   return (
@@ -47,7 +62,9 @@ const InstructionsModal = ({ isOpen, onClose, quiz, isRecommended }: Instruction
             <ClipboardList className='h-5 w-5 text-blue-500' />
             <div>
               <p className='font-medium'>Quiz Details</p>
-              <p className='text-sm text-gray-500'>10 questions • 45 minutes</p>
+              <p className='text-sm text-gray-500'>
+                10 questions • {quiz.isTimedQuiz ? quiz.quizTime + ' minutes' : 'No time limit'}
+              </p>
             </div>
           </div>
 
@@ -57,7 +74,9 @@ const InstructionsModal = ({ isOpen, onClose, quiz, isRecommended }: Instruction
               <div>
                 <p className='font-medium'>Time Limit</p>
                 <p className='text-sm text-gray-500'>
-                  Each quiz has a fixed duration. The timer will start once you begin.
+                  {quiz.isTimedQuiz
+                    ? 'This quiz has a fixed duration. The timer will start once you begin.'
+                    : 'This quiz has no time limit. But challenge yourself and complete it faster.'}
                 </p>
               </div>
             </div>
@@ -66,12 +85,28 @@ const InstructionsModal = ({ isOpen, onClose, quiz, isRecommended }: Instruction
               <AlertCircle className='h-5 w-5 text-red-500 mt-0.5' />
               <div>
                 <p className='font-medium'>Important Rules</p>
-                <ul className='text-sm text-gray-500 list-disc pl-4 space-y-1'>
-                  <li>You cannot pause the timer once started</li>
-                  <li>Each question can only be answered once</li>
-                  <li>Ensure stable internet connection</li>
-                  <li>Do not refresh or leave the page</li>
-                </ul>
+                {quiz.isTimedQuiz ? (
+                  <ul className='text-sm text-gray-500 list-disc pl-4 space-y-1'>
+                    <li>The quiz must be completed within time duration.</li>
+                    <li>You should answer for all the questions in order to submit the quiz.</li>
+                    <li>
+                      You can't skip the questions. But you can go back and change your answers.
+                    </li>
+                    <li>The quiz will be automatically submitted when the time runs out.</li>
+                    <li>Ensure stable internet connection</li>
+                    <li>Do not refresh or leave the page</li>
+                  </ul>
+                ) : (
+                  <ul className='text-sm text-gray-500 list-disc pl-4 space-y-1'>
+                    <li>You should answer for all the questions in order to submit the quiz.</li>
+                    <li>
+                      You can't skip the questions. But you can go back and change your answers.
+                    </li>
+
+                    <li>Ensure stable internet connection</li>
+                    <li>Do not refresh or leave the page</li>
+                  </ul>
+                )}
               </div>
             </div>
           </div>

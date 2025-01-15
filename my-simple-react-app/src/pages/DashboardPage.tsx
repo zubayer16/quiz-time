@@ -25,7 +25,10 @@ interface RecommendedQuiz {
 const DashboardPage = () => {
   const [timerActive, setTimerActive] = useState(false);
   const [initialTime] = useState(300); // 5 minutes
-  const categories = [{ name: 'Default', quizCount: 1, icon: '🔬' }];
+  const categories = [
+    { name: 'Default Quizzes', quizCount: 1, icon: '🔬' },
+    { name: 'Timed Quizzes', quizCount: 1, icon: '⏱️' },
+  ];
   const navigate = useNavigate();
   const { userId, firstName } = useAuth();
   const {
@@ -62,7 +65,11 @@ const DashboardPage = () => {
     statsData.getUserStats;
 
   const handleCategoryClick = (categoryName: string) => {
-    navigate(`/quizzes/${categoryName.toLowerCase()}`);
+    if (categoryName === 'Timed Quizzes') {
+      navigate(`/quizzes/${categoryName.toLowerCase()}`, { state: { isTimedQuiz: true } }); // Add query parameter for timed quizzes
+    } else {
+      navigate(`/quizzes/${categoryName.toLowerCase()}`);
+    }
   };
   //
 
@@ -97,7 +104,6 @@ const DashboardPage = () => {
             </CardHeader>
             <CardContent>
               <p className='text-2xl font-bold'>{totalScore}</p>
-              <p className='text-sm text-gray-500'>Top 10% of users</p>
             </CardContent>
           </Card>
 
@@ -108,7 +114,6 @@ const DashboardPage = () => {
             </CardHeader>
             <CardContent>
               <p className='text-2xl font-bold'>{quizzesCompleted}</p>
-              <p className='text-sm text-gray-500'>Last quiz 2 days ago</p>
             </CardContent>
           </Card>
 
@@ -119,7 +124,6 @@ const DashboardPage = () => {
             </CardHeader>
             <CardContent>
               <p className='text-2xl font-bold'>{Math.round(averageScore)}</p>
-              <p className='text-sm text-gray-500'>+5% this month</p>
             </CardContent>
           </Card>
         </div>
@@ -165,7 +169,7 @@ const DashboardPage = () => {
           )}
         </section>
         {/* Timed Quiz Card */}
-        <Card
+        {/* <Card
           className='hover:shadow-lg transition-shadow cursor-pointer bg-blue-500 text-white'
           onClick={handleTimedQuizClick}
         >
@@ -174,7 +178,7 @@ const DashboardPage = () => {
             <h3 className='font-semibold text-lg'>Timed Quiz</h3>
             <p className='text-sm'>Challenge yourself against the clock!</p>
           </CardContent>
-        </Card>
+        </Card> */}
 
         {/* Recent Activity Section 
         <section>

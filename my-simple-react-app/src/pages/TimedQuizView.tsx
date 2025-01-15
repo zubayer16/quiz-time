@@ -3,12 +3,13 @@ import { useNavigate, useParams, useLocation } from 'react-router-dom';
 import { Card } from '../components/ui/card';
 import { Button } from '../components/ui/button';
 import { Progress } from '../components/ui/progress';
-import { ArrowLeft, ArrowRight, Send, X } from 'lucide-react';
+import { ArrowLeft, ArrowRight, Send, Clock, X } from 'lucide-react';
 import { useMutation, useQuery } from '@apollo/client';
 import { GET_QUIZ_BY_ID } from '../graphql/queries/quiz';
 import { SUBMIT_QUIZ } from '../graphql/mutations/quiz';
 import ConfirmationDialog from '../components/modals/ConfirmationDialogModal';
 import { useAuth } from '../context/AuthContext';
+import { Alert, AlertDescription } from '../components/ui/alert';
 
 interface Question {
   id: number;
@@ -22,15 +23,16 @@ interface Quiz {
   title: string;
   description: string;
   questions: Question[];
+  quizTime?: number;
 }
 
 interface QuizSessionData {
+  startTime: number;
+  totalTime: number;
   quizId: string;
-  currentQuestion: number;
-  answers: number[];
 }
 
-const QuizView = () => {
+const TimedQuizView = () => {
   const { quizId } = useParams<{ quizId: string }>();
   const location = useLocation();
   const [currentQuestion, setCurrentQuestion] = useState(0);
@@ -38,8 +40,10 @@ const QuizView = () => {
   const [questions, setQuestions] = useState<Question[]>([]);
   const [quiz, setQuiz] = useState<Quiz>();
   const [showConfirmDialog, setShowConfirmDialog] = useState(false);
-  const [showQuitDialog, setShowQuitDialog] = useState(false);
+  const [timeRemaining, setTimeRemaining] = useState<number>(0);
+  const [isTimeWarning, setIsTimeWarning] = useState(false);
   const [submitQuiz, { loading: submitting }] = useMutation(SUBMIT_QUIZ);
+  const [showQuitDialog, setShowQuitDialog] = useState(false);
   const navigate = useNavigate();
   const { userId } = useAuth();
   const isRecommended = location.state?.isRecommended;
@@ -48,15 +52,17 @@ const QuizView = () => {
     variables: { quizId, isRecommended },
   });
 
-  // Session storage functions
-  const storeQuizSession = useCallback(() => {
-    const sessionData: QuizSessionData = {
-      quizId: quizId as string,
-      currentQuestion,
-      answers: selectedAnswers,
-    };
-    localStorage.setItem(`quiz_session_${quizId}`, JSON.stringify(sessionData));
-  }, [quizId, currentQuestion, selectedAnswers]);
+  const storeQuizSession = useCallback(
+    (timeLeft: number, quizTime: number) => {
+      const sessionData: QuizSessionData = {
+        startTime: Date.now(),
+        totalTime: quizTime,
+        quizId: quizId as string,
+      };
+      localStorage.setItem(`quiz_session_${quizId}`, JSON.stringify(sessionData));
+    },
+    [quizId],
+  );
 
   const getQuizSession = useCallback(() => {
     const sessionData = localStorage.getItem(`quiz_session_${quizId}`);
@@ -68,20 +74,23 @@ const QuizView = () => {
       return null;
     }
 
-    return session;
+    const elapsedTime = Math.floor((Date.now() - session.startTime) / 1000);
+    const remainingTime = Math.max(0, session.totalTime - elapsedTime);
+
+    return remainingTime;
   }, [quizId]);
 
   const clearQuizSession = useCallback(() => {
     localStorage.removeItem(`quiz_session_${quizId}`);
   }, [quizId]);
 
-  // Handle quit
   const handleQuit = () => {
     clearQuizSession();
+    localStorage.removeItem(`quiz_answers_${quizId}`);
     navigate('/home');
   };
 
-  // Initialize quiz and restore session
+  // Initialize quiz and timer
   useEffect(() => {
     if (data?.quiz) {
       setQuiz(data.quiz);
@@ -89,19 +98,69 @@ const QuizView = () => {
 
       // Check for existing session
       const existingSession = getQuizSession();
-      if (existingSession) {
-        setCurrentQuestion(existingSession.currentQuestion);
-        setSelectedAnswers(existingSession.answers);
+
+      if (existingSession !== null) {
+        // Resume from existing session
+        setTimeRemaining(existingSession);
+      } else if (data.quiz.quizTime) {
+        // Start new session
+        const quizTime = data.quiz.quizTime * 60;
+        setTimeRemaining(quizTime);
+        storeQuizSession(quizTime, quizTime);
       }
     }
-  }, [data, getQuizSession]);
+  }, [data, getQuizSession, storeQuizSession]);
 
-  // Save session when answers or current question changes
+  // Save answers to localStorage
   useEffect(() => {
-    if (selectedAnswers.length > 0 || currentQuestion > 0) {
-      storeQuizSession();
+    if (selectedAnswers.length > 0) {
+      localStorage.setItem(`quiz_answers_${quizId}`, JSON.stringify(selectedAnswers));
     }
-  }, [selectedAnswers, currentQuestion, storeQuizSession]);
+  }, [selectedAnswers, quizId]);
+
+  // Load saved answers on init
+  useEffect(() => {
+    const savedAnswers = localStorage.getItem(`quiz_answers_${quizId}`);
+    if (savedAnswers) {
+      setSelectedAnswers(JSON.parse(savedAnswers));
+    }
+  }, [quizId]);
+
+  // Timer countdown effect
+  useEffect(() => {
+    if (!timeRemaining) return;
+
+    const timer = setInterval(() => {
+      setTimeRemaining((prevTime) => {
+        const newTime = prevTime - 1;
+
+        if (newTime <= 300 && !isTimeWarning) {
+          setIsTimeWarning(true);
+        }
+
+        if (newTime <= 0) {
+          clearInterval(timer);
+          handleTimeUp();
+          return 0;
+        }
+
+        return newTime;
+      });
+    }, 1000);
+
+    return () => clearInterval(timer);
+  }, [timeRemaining]);
+
+  const handleTimeUp = useCallback(async () => {
+    clearQuizSession();
+    await handleConfirmedSubmit();
+  }, [selectedAnswers, clearQuizSession]);
+
+  const formatTime = (seconds: number): string => {
+    const minutes = Math.floor(seconds / 60);
+    const remainingSeconds = seconds % 60;
+    return `${minutes}:${remainingSeconds.toString().padStart(2, '0')}`;
+  };
 
   const answeredQuestionsCount = selectedAnswers.filter((answer) => answer !== undefined).length;
   const progress = quiz ? (answeredQuestionsCount / quiz.questions.length) * 100 : 0;
@@ -133,10 +192,12 @@ const QuizView = () => {
           quizId,
           answers: selectedAnswers,
           isRecommended,
+          timeSpent: quiz?.quizTime ? quiz.quizTime * 60 - timeRemaining : undefined,
         },
       });
 
       clearQuizSession();
+      localStorage.removeItem(`quiz_answers_${quizId}`);
       setShowConfirmDialog(false);
 
       if (response.data.submitQuiz.success) {
@@ -176,6 +237,16 @@ const QuizView = () => {
                   <h1 className='text-xl font-semibold text-gray-800'>{quiz?.title || 'Quiz'}</h1>
                 </div>
 
+                {/* Timer */}
+                {timeRemaining > 0 && (
+                  <div
+                    className={`flex items-center gap-2 font-mono text-lg px-4 py-2 rounded-full 
+                  ${isTimeWarning ? 'bg-red-50 text-red-600' : 'bg-gray-50 text-gray-700'}`}
+                  >
+                    <Clock className='h-5 w-5' />
+                    {formatTime(timeRemaining)}
+                  </div>
+                )}
                 <div className='py-2 flex justify-end'>
                   <Button
                     variant='outline'
@@ -198,14 +269,22 @@ const QuizView = () => {
                   Question {currentQuestion + 1} of {questions.length}
                 </span>
               </div>
+
+              {/* Alerts Section */}
+              {isTimeWarning && (
+                <Alert variant='destructive' className='mb-4 bg-red-50 border-red-200'>
+                  <AlertDescription>
+                    Less than 5 minutes remaining! Please finish your quiz soon.
+                  </AlertDescription>
+                </Alert>
+              )}
             </div>
           </div>
         </header>
-
         <main className='flex-1 overflow-auto py-8'>
           <div className='max-w-4xl mx-auto px-6'>
             {questions[currentQuestion] && (
-              <Card className='w-full p-6 mb-8'>
+              <Card className='w-full max-w-4xl p-6 mb-8'>
                 <h2 className='text-2xl font-bold text-center mb-8'>
                   {questions[currentQuestion].question}
                 </h2>
@@ -288,10 +367,11 @@ const QuizView = () => {
                 • Unanswered Questions:{' '}
                 {questions.length - selectedAnswers.filter((a) => a !== undefined).length}
               </li>
+              {timeRemaining > 0 && <li>• Time Remaining: {formatTime(timeRemaining)}</li>}
             </ul>
           </div>
         </ConfirmationDialog>
-
+        {/* Quit Confirmation Dialog */}
         <ConfirmationDialog
           isOpen={showQuitDialog}
           onClose={() => setShowQuitDialog(false)}
@@ -306,4 +386,4 @@ const QuizView = () => {
   );
 };
 
-export default QuizView;
+export default TimedQuizView;

@@ -21,6 +21,14 @@ interface ConfirmationDialogProps {
   confirmButtonText?: string;
   cancelButtonText?: string;
   children?: React.ReactNode;
+  confirmButtonVarient?:
+    | 'default'
+    | 'link'
+    | 'secondary'
+    | 'outline'
+    | 'destructive'
+    | 'ghost'
+    | null;
 }
 
 const ConfirmationDialog = ({
@@ -33,6 +41,7 @@ const ConfirmationDialog = ({
   confirmButtonText = 'Confirm',
   cancelButtonText = 'Cancel',
   children,
+  confirmButtonVarient = 'default',
 }: ConfirmationDialogProps) => {
   return (
     <Dialog open={isOpen} onOpenChange={onClose}>
@@ -48,7 +57,7 @@ const ConfirmationDialog = ({
           <Button variant='outline' onClick={onClose} disabled={isLoading}>
             {cancelButtonText}
           </Button>
-          <Button onClick={onConfirm} disabled={isLoading}>
+          <Button onClick={onConfirm} disabled={isLoading} variant={confirmButtonVarient}>
             {isLoading ? (
               <>
                 <Loader2 className='mr-2 h-4 w-4 animate-spin' />
